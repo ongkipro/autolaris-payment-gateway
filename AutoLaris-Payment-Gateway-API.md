@@ -18,6 +18,34 @@ AutoLaris H2H API adalah layanan integrasi (Host-to-Host) antara fitur AutoLaris
 
 Fitur **Create Payment** memungkinkan partner membuat tagihan pembayaran melalui berbagai channel: **Virtual Account** (BCA, Mandiri, BNI, BRI, BSI, Permata), **QRIS**, dan **E-Wallet DANA**. Setelah tagihan dibuat, status pembayaran dikirim ke partner melalui **callback URL**.
 
+### Diagram alur pembayaran
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant P as Partner
+    participant A as AutoLaris
+    participant C as Pelanggan
+    P->>A: POST /api/h2h/create_payment (reff_id, channel_code, amount, callback_url)
+    A-->>P: 200 { rc:"00", data:{ trx_id, virtual_account/qr/url, total } }
+    P->>C: Tampilkan instruksi bayar (VA / QRIS / deeplink)
+    C->>A: Bayar sebelum expired
+    A->>P: POST callback_url (status pembayaran)
+    P-->>A: HTTP 200 (terima)
+    Note over P: Cocokkan via trx_id/reff_id, update order PAID
+```
+
+### Status transaksi
+
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING: create_payment sukses
+    PENDING --> PAID: pelanggan bayar (callback)
+    PENDING --> EXPIRED: lewat waktu expired
+    PAID --> [*]
+    EXPIRED --> [*]
+```
+
 ---
 
 ## 2. Base URL & Environment

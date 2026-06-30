@@ -1,44 +1,67 @@
-# AutoLaris Payment Gateway — API Docs
+<div align="center">
 
-Dokumentasi tidak resmi untuk fitur **Create Payment (Payment Gateway)** pada **AutoLaris H2H API** — pembuatan tagihan pembayaran melalui **Virtual Account**, **QRIS**, dan **E-Wallet DANA**, beserta alur callback notifikasi pembayaran.
+# 💳 AutoLaris Payment Gateway
 
-> Disusun dari [Postman Documenter AutoLaris H2H API](https://documenter.getpostman.com/view/25938923/2sB2iwFuwz) untuk memudahkan integrasi partner. Bukan dokumentasi resmi AutoLaris.
+### Dokumentasi API **Create Payment** — Virtual Account · QRIS · E-Wallet DANA
 
-## Isi
+Panduan integrasi partner untuk membuat tagihan pembayaran lewat **AutoLaris H2H API**, lengkap dengan alur callback, contoh kode, dan checklist go-live.
 
-📄 **[AutoLaris-Payment-Gateway-API.md](./AutoLaris-Payment-Gateway-API.md)** — dokumentasi lengkap:
+<br/>
 
-- Base URL & environment (production / development)
-- Autentikasi Bearer Token (API Key) + whitelist IP
-- Endpoint `POST /api/h2h/create_payment` — request, response, tabel field
-- Daftar 8 channel pembayaran
-- Alur & contoh handler callback (Node.js / Express & PHP / Laravel)
-- Penanganan error + pencegahan double-charge
-- Checklist go-live & daftar pertanyaan terbuka untuk tim AutoLaris
+![Status](https://img.shields.io/badge/status-stable-22c55e?style=for-the-badge)
+![Type](https://img.shields.io/badge/type-API%20Docs-3b82f6?style=for-the-badge)
+![Auth](https://img.shields.io/badge/auth-Bearer%20Token-f59e0b?style=for-the-badge)
+![Made in](https://img.shields.io/badge/made%20in-Indonesia%20%F0%9F%87%AE%F0%9F%87%A9-e11d48?style=for-the-badge)
 
-## Ringkas
+![QRIS](https://img.shields.io/badge/QRIS-✓-111?style=flat-square)
+![Virtual Account](https://img.shields.io/badge/Virtual%20Account-6%20bank-2563eb?style=flat-square)
+![DANA](https://img.shields.io/badge/E--Wallet-DANA-118EEA?style=flat-square)
+
+</div>
+
+---
+
+> [!NOTE]
+> Dokumentasi komunitas yang disusun dari [Postman Documenter AutoLaris H2H API](https://documenter.getpostman.com/view/25938923/2sB2iwFuwz) untuk memudahkan integrasi partner. **Bukan** dokumentasi resmi AutoLaris.
+
+## 📑 Daftar Isi
+
+- [Sekilas](#-sekilas)
+- [Alur Pembayaran](#-alur-pembayaran)
+- [Quick Start](#-quick-start)
+- [Channel Pembayaran](#-channel-pembayaran)
+- [Response](#-response)
+- [Dokumentasi Lengkap](#-dokumentasi-lengkap)
+- [Sumber & Lisensi](#-sumber--lisensi)
+
+## ✨ Sekilas
 
 | | |
 |---|---|
-| **Base URL** | `https://api-h2h.autolaris.com` |
-| **Endpoint** | `POST /api/h2h/create_payment` |
-| **Auth** | `Authorization: Bearer <API_KEY>` |
-| **Content-Type** | `application/json` |
+| 🌐 **Base URL** | `https://api-h2h.autolaris.com` |
+| 📮 **Endpoint** | `POST /api/h2h/create_payment` |
+| 🔑 **Auth** | `Authorization: Bearer <API_KEY>` |
+| 📦 **Content-Type** | `application/json` |
+| 🧾 **Channel** | QRIS · 6 Virtual Account · DANA |
 
-### Channel pembayaran
+## 🔄 Alur Pembayaran
 
-| Kode | Keterangan |
-|---|---|
-| `QRIS` | QRIS |
-| `VABCA` | BCA Virtual Account |
-| `VAMANDIRI` | Mandiri Virtual Account |
-| `VABNI` | BNI Virtual Account |
-| `VABRI` | BRI Virtual Account |
-| `VABSI` | BSI Virtual Account |
-| `VAPERMATA` | Permata Virtual Account |
-| `DANA` | E-Wallet DANA |
+```mermaid
+sequenceDiagram
+    autonumber
+    participant P as 🧑‍💻 Partner
+    participant A as 🏢 AutoLaris
+    participant C as 🛒 Pelanggan
+    P->>A: POST /create_payment (channel, amount, callback_url)
+    A-->>P: 200 { trx_id, VA/QRIS/url, total }
+    P->>C: Tampilkan instruksi bayar
+    C->>A: Bayar sebelum expired
+    A->>P: Callback status (PAID)
+    P-->>A: HTTP 200
+    Note over P: Update order → PAID
+```
 
-### Contoh request
+## 🚀 Quick Start
 
 ```bash
 curl -X POST "https://api-h2h.autolaris.com/api/h2h/create_payment" \
@@ -57,7 +80,51 @@ curl -X POST "https://api-h2h.autolaris.com/api/h2h/create_payment" \
   }'
 ```
 
-### Contoh response
+<details>
+<summary><b>Node.js (fetch)</b></summary>
+
+```js
+const res = await fetch("https://api-h2h.autolaris.com/api/h2h/create_payment", {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${process.env.AUTOLARIS_API_KEY}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    reff_id: "ORD-001",
+    channel_code: "QRIS",
+    customer_id: "31857118",
+    customer_name: "Budi Santoso",
+    customer_phone: "081234567890",
+    customer_email: "customer@example.com",
+    expired: "20270422094000",
+    amount: "25000",
+    callback_url: "https://your-domain.com/autolaris/callback",
+  }),
+});
+const json = await res.json();
+if (json.rc !== "00") throw new Error(json.ket);
+const { trx_id, virtual_account, qr, url, total } = json.data;
+```
+
+</details>
+
+## 🏦 Channel Pembayaran
+
+| Kode | Channel | Tipe |
+|---|---|:---:|
+| `QRIS` | QRIS | 📱 QR |
+| `VABCA` | BCA Virtual Account | 🏦 VA |
+| `VAMANDIRI` | Mandiri Virtual Account | 🏦 VA |
+| `VABNI` | BNI Virtual Account | 🏦 VA |
+| `VABRI` | BRI Virtual Account | 🏦 VA |
+| `VABSI` | BSI Virtual Account | 🏦 VA |
+| `VAPERMATA` | Permata Virtual Account | 🏦 VA |
+| `DANA` | E-Wallet DANA | 👛 E-Wallet |
+
+> 💡 Field instruksi bayar pada response menyesuaikan channel: `VA*` → `virtual_account`, `QRIS` → `qr`, `DANA` → `url`.
+
+## 📥 Response
 
 ```json
 {
@@ -76,13 +143,36 @@ curl -X POST "https://api-h2h.autolaris.com/api/h2h/create_payment" \
 }
 ```
 
-> Tagihkan `total` (sudah termasuk `admin`) ke pelanggan. Cek `rc == "00"` sebelum memproses `data`.
+> [!IMPORTANT]
+> Tagihkan **`total`** (sudah termasuk `admin`) ke pelanggan, dan selalu cek **`rc == "00"`** sebelum memproses `data`.
 
-## Sumber resmi
+## 📚 Dokumentasi Lengkap
 
-- Dashboard seller / request API Key: https://seller.autolaris.com
-- Daftar akun: https://seller.autolaris.com/daftar
+👉 **[AutoLaris-Payment-Gateway-API.md](./AutoLaris-Payment-Gateway-API.md)**
 
-## Lisensi & disclaimer
+<table>
+<tr><td>
 
-Dokumentasi komunitas untuk tujuan integrasi. Seluruh merek dagang milik AutoLaris. Konfirmasikan detail final (format payload callback, zona waktu `expired`, signature) ke tim AutoLaris sebelum produksi.
+- 🌐 Base URL & environment
+- 🔑 Autentikasi & whitelist IP
+- 📮 Endpoint `create_payment` (request/response detail)
+- 🏦 8 channel pembayaran
+
+</td><td>
+
+- 🔔 Callback + handler **Node.js** & **PHP/Laravel**
+- ⚠️ Penanganan error & anti double-charge
+- ✅ Checklist go-live
+- ❓ Pertanyaan terbuka untuk tim AutoLaris
+
+</td></tr>
+</table>
+
+## 🔗 Sumber & Lisensi
+
+- 🏪 Dashboard seller / request API Key → https://seller.autolaris.com
+- 📝 Daftar akun → https://seller.autolaris.com/daftar
+
+> Dokumentasi untuk tujuan integrasi. Seluruh merek dagang milik **AutoLaris**. Konfirmasikan detail final (format payload callback, zona waktu `expired`, signature) ke tim AutoLaris sebelum produksi.
+
+<div align="center"><sub>Dibuat untuk mempermudah developer Indonesia 🇮🇩 mengintegrasikan AutoLaris Payment Gateway.</sub></div>
