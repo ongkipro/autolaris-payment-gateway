@@ -1,10 +1,10 @@
 <div align="center">
 
-# 💳 AutoLaris Payment Gateway
+# 🚚 AutoLaris H2H API
 
-### Dokumentasi API **Create Payment** — Virtual Account · QRIS · E-Wallet DANA
+### Dokumentasi integrasi partner — **Ongkir · Resi · Tracking · Cancel · Payment Gateway**
 
-Panduan integrasi partner untuk membuat tagihan pembayaran lewat **AutoLaris H2H API**, lengkap dengan alur callback, contoh kode, dan checklist go-live.
+Panduan lengkap untuk mengintegrasikan layanan AutoLaris H2H: cek ongkir, buat resi, lacak kiriman, batalkan resi, dan **payment gateway** (Virtual Account · QRIS · E-Wallet DANA) beserta alur callback.
 
 <br/>
 
@@ -13,6 +13,8 @@ Panduan integrasi partner untuk membuat tagihan pembayaran lewat **AutoLaris H2H
 ![Auth](https://img.shields.io/badge/auth-Bearer%20Token-f59e0b?style=for-the-badge)
 ![Made in](https://img.shields.io/badge/made%20in-Indonesia%20%F0%9F%87%AE%F0%9F%87%A9-e11d48?style=for-the-badge)
 
+![Endpoints](https://img.shields.io/badge/endpoints-5-8b5cf6?style=flat-square)
+![Kurir](https://img.shields.io/badge/kurir-8%2B-16a34a?style=flat-square)
 ![QRIS](https://img.shields.io/badge/QRIS-✓-111?style=flat-square)
 ![Virtual Account](https://img.shields.io/badge/Virtual%20Account-6%20bank-2563eb?style=flat-square)
 ![DANA](https://img.shields.io/badge/E--Wallet-DANA-118EEA?style=flat-square)
@@ -24,10 +26,27 @@ Panduan integrasi partner untuk membuat tagihan pembayaran lewat **AutoLaris H2H
 > [!NOTE]
 > Dokumentasi komunitas yang disusun dari [Postman Documenter AutoLaris H2H API](https://documenter.getpostman.com/view/25938923/2sB2iwFuwz) untuk memudahkan integrasi partner. **Bukan** dokumentasi resmi AutoLaris.
 
+## 📚 Dokumentasi
+
+| Dokumen | Cakupan |
+|---|---|
+| 📘 **[AutoLaris-H2H-API.md](./AutoLaris-H2H-API.md)** | **Referensi lengkap 5 endpoint** — Ongkir, Resi, Tracking, Cancel, Payment |
+| 💳 **[AutoLaris-Payment-Gateway-API.md](./AutoLaris-Payment-Gateway-API.md)** | Fokus **payment gateway** — callback, handler Node/PHP, error-handling, go-live |
+
+## 🧩 Daftar Endpoint
+
+| # | Service | Method | Endpoint |
+|---|---|---|---|
+| 1 | Cek Ongkir | `POST` | `/api/h2h/ongkir` |
+| 2 | Create Resi | `POST` | `/api/h2h/order` |
+| 3 | Tracking | `POST` | `/api/h2h/lacak` |
+| 4 | Cancel Resi | `POST` | `/api/h2h/cancel` |
+| 5 | Create Payment | `POST` | `/api/h2h/create_payment` |
+
 ## 📑 Daftar Isi
 
 - [Sekilas](#-sekilas)
-- [Alur Pembayaran](#-alur-pembayaran)
+- [Alur Integrasi](#-alur-integrasi)
 - [Quick Start](#-quick-start)
 - [Channel Pembayaran](#-channel-pembayaran)
 - [Response](#-response)
@@ -39,12 +58,34 @@ Panduan integrasi partner untuk membuat tagihan pembayaran lewat **AutoLaris H2H
 | | |
 |---|---|
 | 🌐 **Base URL** | `https://api-h2h.autolaris.com` |
-| 📮 **Endpoint** | `POST /api/h2h/create_payment` |
+| 📮 **Endpoint** | 5 service (lihat tabel di atas) |
 | 🔑 **Auth** | `Authorization: Bearer <API_KEY>` |
 | 📦 **Content-Type** | `application/json` |
-| 🧾 **Channel** | QRIS · 6 Virtual Account · DANA |
+| 📨 **Format** | `{ "rc": "00", "ket": "...", "data": {...} }` |
+| 🧾 **Channel bayar** | QRIS · 6 Virtual Account · DANA |
 
-## 🔄 Alur Pembayaran
+## 🔄 Alur Integrasi
+
+**Pengiriman** (Ongkir → Resi → Tracking → Cancel):
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant P as 🧑‍💻 Partner
+    participant A as 🏢 AutoLaris
+    P->>A: Cek Ongkir (origin, destination, berat, dimensi)
+    A-->>P: daftar kurir + courir_id + harga
+    P->>A: Create Resi (courir_id, alamat, order_details)
+    A-->>P: awb + transaction_id
+    P->>A: Tracking (awb)
+    A-->>P: status + histories
+    opt batalkan
+        P->>A: Cancel Resi (transaction_id)
+        A-->>P: sukses
+    end
+```
+
+**Pembayaran** (Payment Gateway):
 
 ```mermaid
 sequenceDiagram
@@ -52,7 +93,7 @@ sequenceDiagram
     participant P as 🧑‍💻 Partner
     participant A as 🏢 AutoLaris
     participant C as 🛒 Pelanggan
-    P->>A: POST /create_payment (channel, amount, callback_url)
+    P->>A: Create Payment (channel, amount, callback_url)
     A-->>P: 200 { trx_id, VA/QRIS/url, total }
     P->>C: Tampilkan instruksi bayar
     C->>A: Bayar sebelum expired
@@ -62,6 +103,17 @@ sequenceDiagram
 ```
 
 ## 🚀 Quick Start
+
+**Cek Ongkir**
+
+```bash
+curl -X POST "https://api-h2h.autolaris.com/api/h2h/ongkir" \
+  -H "Authorization: Bearer <API_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{ "origin": 3515140, "destination": 3173060, "weight": "1000", "length": "10", "width": "20", "height": "30" }'
+```
+
+**Create Payment**
 
 ```bash
 curl -X POST "https://api-h2h.autolaris.com/api/h2h/create_payment" \
@@ -148,22 +200,26 @@ const { trx_id, virtual_account, qr, url, total } = json.data;
 
 ## 📚 Dokumentasi Lengkap
 
-👉 **[AutoLaris-Payment-Gateway-API.md](./AutoLaris-Payment-Gateway-API.md)**
-
 <table>
-<tr><td>
+<tr><td width="50%" valign="top">
 
-- 🌐 Base URL & environment
-- 🔑 Autentikasi & whitelist IP
-- 📮 Endpoint `create_payment` (request/response detail)
-- 🏦 8 channel pembayaran
+### 📘 [AutoLaris-H2H-API.md](./AutoLaris-H2H-API.md)
+Referensi **5 endpoint** lengkap:
+- 🚚 Cek Ongkir (kurir, tarif, `courir_id`)
+- 📦 Create Resi (Reguler/COD, `order_details`)
+- 🔍 Tracking (histories, POD, status)
+- ❌ Cancel Resi
+- 💳 Create Payment (ringkas)
 
-</td><td>
+</td><td width="50%" valign="top">
 
+### 💳 [AutoLaris-Payment-Gateway-API.md](./AutoLaris-Payment-Gateway-API.md)
+Fokus **payment gateway**:
+- 🏦 8 channel (VA/QRIS/DANA) detail
 - 🔔 Callback + handler **Node.js** & **PHP/Laravel**
-- ⚠️ Penanganan error & anti double-charge
+- ⚠️ Error-handling & anti double-charge
 - ✅ Checklist go-live
-- ❓ Pertanyaan terbuka untuk tim AutoLaris
+- ❓ Pertanyaan terbuka untuk vendor
 
 </td></tr>
 </table>
