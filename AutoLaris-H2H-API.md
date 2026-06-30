@@ -448,6 +448,121 @@ Membuat tagihan pembayaran (Virtual Account / QRIS / E-Wallet). **Detail lengkap
 
 ---
 
+## Contoh Implementasi
+
+### Node.js — client reusable (semua endpoint)
+
+```js
+// autolaris.js
+const BASE = "https://api-h2h.autolaris.com";
+
+async function call(path, body) {
+  const res = await fetch(BASE + path, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.AUTOLARIS_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+  const json = await res.json();
+  if (json.rc !== "00") throw new Error(`[${json.rc}] ${json.ket}`);
+  return json.data;
+}
+
+export const AutoLaris = {
+  cekOngkir: (p) => call("/api/h2h/ongkir", p),
+  createResi: (p) => call("/api/h2h/order", p),
+  tracking: (awb) => call("/api/h2h/lacak", { awb }),
+  cancelResi: (transaction_id) => call("/api/h2h/cancel", { transaction_id }),
+  createPayment: (p) => call("/api/h2h/create_payment", p),
+};
+```
+
+```js
+// contoh pemakaian
+import { AutoLaris } from "./autolaris.js";
+
+// 1) cek ongkir → ambil courir_id termurah
+const couriers = await AutoLaris.cekOngkir({
+  origin: 3515140, destination: 3173060,
+  weight: "1000", length: "10", width: "20", height: "30",
+});
+const services = couriers.flatMap((c) => c.service_detail);
+const cheapest = services.sort((a, b) => a.price - b.price)[0];
+
+// 2) buat resi
+const resi = await AutoLaris.createResi({
+  reff_id: "ORD-" + Date.now(),
+  courir_id: Number(cheapest.courir_id),
+  origin: 3515140, destination: 3173060,
+  weight: "1000", length: "10", width: "20", height: "30",
+  shipper_name: "Toko Joss", shipper_phone: "081331115552",
+  shipper_email: "toko@example.com", shipper_address: "Jl. Contoh 1",
+  receiver_name: "Budi", receiver_phone: "081331000000",
+  receiver_email: "budi@example.com", receiver_address: "Gang Buntu 5, Sidoarjo",
+  type: 1, grand_total: "12000", callback_url: "https://you.com/tracking-cb",
+  order_details: [{ name: "Produk A", qty: "1", unit_price: "12000" }],
+});
+console.log("AWB:", resi.awb, "TRX:", resi.transaction_id);
+
+// 3) lacak
+const track = await AutoLaris.tracking(resi.awb);
+console.log("Status:", track.stats);
+
+// 4) (opsional) batalkan
+// await AutoLaris.cancelResi(resi.transaction_id);
+
+// 5) buat tagihan pembayaran
+const pay = await AutoLaris.createPayment({
+  reff_id: "PAY-" + Date.now(), channel_code: "QRIS",
+  customer_id: "C1", customer_name: "Budi", customer_phone: "081234567890",
+  customer_email: "budi@example.com", expired: "20270422094000",
+  amount: "25000", callback_url: "https://you.com/payment-cb",
+});
+console.log("Bayar total:", pay.total);
+```
+
+### PHP — helper sederhana
+
+```php
+function autolaris(string $path, array $body): array {
+    $ch = curl_init("https://api-h2h.autolaris.com" . $path);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST           => true,
+        CURLOPT_HTTPHEADER     => [
+            "Authorization: Bearer " . getenv("AUTOLARIS_API_KEY"),
+            "Content-Type: application/json",
+        ],
+        CURLOPT_POSTFIELDS => json_encode($body),
+    ]);
+    $res = json_decode(curl_exec($ch), true);
+    curl_close($ch);
+    if (($res['rc'] ?? '') !== '00') {
+        throw new RuntimeException("[{$res['rc']}] {$res['ket']}");
+    }
+    return $res['data'];
+}
+
+// contoh: cek ongkir
+$ongkir  = autolaris('/api/h2h/ongkir', [
+    'origin' => 3515140, 'destination' => 3173060,
+    'weight' => '1000', 'length' => '10', 'width' => '20', 'height' => '30',
+]);
+
+// contoh: buat pembayaran
+$payment = autolaris('/api/h2h/create_payment', [
+    'reff_id' => 'PAY-' . time(), 'channel_code' => 'VABCA',
+    'customer_id' => 'C1', 'customer_name' => 'Budi',
+    'customer_phone' => '081234567890', 'customer_email' => 'budi@example.com',
+    'expired' => '20270422094000', 'amount' => '25000',
+    'callback_url' => 'https://you.com/payment-cb',
+]);
+```
+
+---
+
 ## Ringkasan Response Code
 
 | `rc` | Arti |

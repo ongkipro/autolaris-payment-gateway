@@ -11,6 +11,7 @@ Panduan lengkap untuk mengintegrasikan layanan AutoLaris H2H: cek ongkir, buat r
 ![Status](https://img.shields.io/badge/status-stable-22c55e?style=for-the-badge)
 ![Type](https://img.shields.io/badge/type-API%20Docs-3b82f6?style=for-the-badge)
 ![Auth](https://img.shields.io/badge/auth-Bearer%20Token-f59e0b?style=for-the-badge)
+![License](https://img.shields.io/badge/license-MIT-0ea5e9?style=for-the-badge)
 ![Made in](https://img.shields.io/badge/made%20in-Indonesia%20%F0%9F%87%AE%F0%9F%87%A9-e11d48?style=for-the-badge)
 
 ![Endpoints](https://img.shields.io/badge/endpoints-5-8b5cf6?style=flat-square)
@@ -230,5 +231,7 @@ Fokus **payment gateway**:
 - 📝 Daftar akun → https://seller.autolaris.com/daftar
 
 > Dokumentasi untuk tujuan integrasi. Seluruh merek dagang milik **AutoLaris**. Konfirmasikan detail final (format payload callback, zona waktu `expired`, signature) ke tim AutoLaris sebelum produksi.
+
+📄 Lisensi dokumentasi: **[MIT](./LICENSE)**.
 
 <div align="center"><sub>Dibuat untuk mempermudah developer Indonesia 🇮🇩 mengintegrasikan AutoLaris Payment Gateway.</sub></div>
