@@ -1,7 +1,6 @@
 # AutoLaris H2H — Payment Gateway API
 
 > Dokumentasi lengkap **Create Payment** (Payment Gateway) pada AutoLaris H2H API.
-> Sumber: Postman Documenter — koleksi *AutoLaris H2H API* (`view/25938923/2sB2iwFuwz`).
 > Fokus dokumen ini: **pembuatan transaksi pembayaran (VA / QRIS / E-Wallet)** beserta callback.
 
 ---
@@ -55,11 +54,11 @@ stateDiagram-v2
 | Production | `https://api-h2h.autolaris.com` |
 | Development | `https://api-h2h.autolaris.com` (gunakan API Key development) |
 
-**Catatan endpoint:** pada koleksi Postman, beberapa request menggunakan double-slash (`//api/h2h/...`). URL yang benar/normalized adalah satu slash: `https://api-h2h.autolaris.com/api/h2h/create_payment`.
+**Catatan endpoint:** gunakan path single-slash: `https://api-h2h.autolaris.com/api/h2h/create_payment`.
 
 ---
 
-## 3. Autentikasi
+## 3. Autentikasi & Kredensial
 
 Seluruh endpoint memakai **Bearer Token** (API Key) pada header `Authorization`.
 
@@ -68,20 +67,17 @@ Authorization: Bearer <API_KEY>
 Content-Type: application/json
 ```
 
-### Cara mendapatkan API Key
+**Kredensial:**
 
-- **Production:** request lewat dashboard seller → https://seller.autolaris.com
-  API Key dikirim ke email yang terdaftar.
-- Belum punya akun: daftar di https://seller.autolaris.com/daftar
-- **Akses production wajib Whitelist IP Address** (maksimal 5 IP).
+| Item | Nilai |
+|---|---|
+| Base URL | `https://api-h2h.autolaris.com` |
+| API Key (Development) | `5fe67ad04a28099fb06b4e185ccf77124a777033913c5525fb49acf59e47b561` |
+| Dashboard seller | https://seller.autolaris.com |
+| Daftar akun | https://seller.autolaris.com/daftar |
+| Akses production | Wajib **Whitelist IP Address** (maks. 5 IP) |
 
-### API Key Development (dari dokumentasi resmi)
-
-```
-5fe67ad04a28099fb06b4e185ccf77124a777033913c5525fb49acf59e47b561
-```
-
-> ⚠️ Key di atas hanya untuk **development/testing** dan sudah dipublikasikan di dokumentasi vendor. Jangan pakai di produksi. Simpan API Key production sebagai secret (env var / secret manager), jangan commit ke repo.
+> ⚠️ Key di atas hanya untuk **development/testing**. Jangan pakai di produksi. Simpan API Key production sebagai secret (env var / secret manager), jangan commit ke repo.
 
 ---
 
@@ -191,7 +187,7 @@ Setelah pelanggan membayar, AutoLaris mengirim notifikasi status ke `callback_ur
 - Lakukan pencocokan menggunakan `trx_id` dan/atau `reff_id`.
 - Balas dengan `HTTP 200` agar AutoLaris menganggap callback terkirim sukses (idempotent: tangani kemungkinan retry/duplikat).
 
-> Struktur payload callback tidak dirinci pada dokumentasi Postman publik. Konfirmasikan format payload final (field status, signature/verifikasi) ke tim AutoLaris sebelum go-live. Disarankan verifikasi keaslian callback (mis. cek IP whitelist / signature).
+> Struktur payload callback belum dirinci. Konfirmasikan format payload final (field status, signature/verifikasi) ke tim AutoLaris sebelum go-live. Disarankan verifikasi keaslian callback (mis. cek IP whitelist / signature).
 
 ### 6.1 Asumsi payload callback (konfirmasi ke vendor)
 
@@ -434,7 +430,7 @@ $data = $res['data']; // trx_id, virtual_account / qr / url, total
 
 ## 11. Checklist Go-Live
 
-- [ ] API Key production diterima via email & disimpan di secret manager
+- [ ] API Key production disimpan di secret manager
 - [ ] IP server production sudah di-whitelist (maks 5) di dashboard AutoLaris
 - [ ] Endpoint `callback_url` publik, HTTPS, balas `200`, idempotent
 - [ ] Format payload callback & field `status` dikonfirmasi ke vendor
@@ -462,7 +458,7 @@ $data = $res['data']; // trx_id, virtual_account / qr / url, total
 
 ## Lampiran — Endpoint lain pada koleksi (ringkas)
 
-Hanya untuk konteks; detail lengkap di Postman.
+Hanya untuk konteks; detail lengkap di [AutoLaris-H2H-API.md](./AutoLaris-H2H-API.md).
 
 | Endpoint | Method | URL | Fungsi |
 |---|---|---|---|
@@ -474,4 +470,4 @@ Hanya untuk konteks; detail lengkap di Postman.
 
 ---
 
-_Disusun dari Postman Documenter AutoLaris H2H API. Untuk format payload callback final dan zona waktu `expired`, konfirmasi ke tim AutoLaris sebelum produksi._
+_Untuk format payload callback final dan zona waktu `expired`, konfirmasi ke tim AutoLaris sebelum produksi._

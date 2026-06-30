@@ -1,7 +1,6 @@
 # AutoLaris H2H API — Referensi Lengkap
 
 > Dokumentasi lengkap **AutoLaris H2H API** (Host-to-Host) untuk integrasi partner.
-> Sumber: [Postman Documenter](https://documenter.getpostman.com/view/25938923/2sB2iwFuwz).
 > Untuk fokus payment gateway, lihat [AutoLaris-Payment-Gateway-API.md](./AutoLaris-Payment-Gateway-API.md).
 
 API H2H AutoLaris adalah layanan untuk mengintegrasikan fitur AutoLaris dengan partner. Terdiri dari 5 service:
@@ -24,9 +23,9 @@ API H2H AutoLaris adalah layanan untuk mengintegrasikan fitur AutoLaris dengan p
 https://api-h2h.autolaris.com
 ```
 
-> Catatan: pada koleksi Postman beberapa request memakai double-slash (`//api/h2h/...`). URL yang benar adalah single-slash seperti tabel di atas.
+> Catatan: gunakan path single-slash seperti tabel di atas (`/api/h2h/...`).
 
-### Autentikasi
+### Autentikasi & Kredensial
 
 Seluruh endpoint memakai **Bearer Token** (API Key) di header.
 
@@ -35,12 +34,17 @@ Authorization: Bearer <API_KEY>
 Content-Type: application/json
 ```
 
-| Hal | Keterangan |
+**Kredensial:**
+
+| Item | Nilai |
 |---|---|
-| Request API Key Production | Dashboard seller → https://seller.autolaris.com (key dikirim ke email terdaftar) |
+| Base URL | `https://api-h2h.autolaris.com` |
+| API Key (Development) | `5fe67ad04a28099fb06b4e185ccf77124a777033913c5525fb49acf59e47b561` |
+| Dashboard seller | https://seller.autolaris.com |
 | Daftar akun | https://seller.autolaris.com/daftar |
 | Akses production | Wajib **Whitelist IP Address** (maks. 5 IP) |
-| API Key Development | `5fe67ad04a28099fb06b4e185ccf77124a777033913c5525fb49acf59e47b561` (testing saja) |
+
+> 🔐 Simpan API Key production sebagai secret (env var / secret manager), jangan commit ke repo.
 
 ### Format Response
 
@@ -580,4 +584,4 @@ $payment = autolaris('/api/h2h/create_payment', [
 
 ---
 
-_Disusun dari Postman Documenter AutoLaris H2H API. Bukan dokumentasi resmi._
+_Dokumentasi integrasi AutoLaris H2H API._

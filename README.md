@@ -25,7 +25,7 @@ Panduan lengkap untuk mengintegrasikan layanan AutoLaris H2H: cek ongkir, buat r
 ---
 
 > [!NOTE]
-> Dokumentasi komunitas yang disusun dari [Postman Documenter AutoLaris H2H API](https://documenter.getpostman.com/view/25938923/2sB2iwFuwz) untuk memudahkan integrasi partner. **Bukan** dokumentasi resmi AutoLaris.
+> Dokumentasi integrasi partner untuk **AutoLaris H2H API**.
 
 ## 📚 Dokumentasi
 
@@ -64,6 +64,17 @@ Panduan lengkap untuk mengintegrasikan layanan AutoLaris H2H: cek ongkir, buat r
 | 📦 **Content-Type** | `application/json` |
 | 📨 **Format** | `{ "rc": "00", "ket": "...", "data": {...} }` |
 | 🧾 **Channel bayar** | QRIS · 6 Virtual Account · DANA |
+
+### 🔐 Kredensial
+
+| Item | Nilai |
+|---|---|
+| Base URL | `https://api-h2h.autolaris.com` |
+| API Key (Development) | `5fe67ad04a28099fb06b4e185ccf77124a777033913c5525fb49acf59e47b561` |
+| Header | `Authorization: Bearer <API_KEY>` |
+| Dashboard | https://seller.autolaris.com · [daftar](https://seller.autolaris.com/daftar) |
+
+> ⚠️ Key di atas untuk **development**. Akses production wajib whitelist IP (maks 5); simpan key production sebagai secret.
 
 ## 🔄 Alur Integrasi
 
